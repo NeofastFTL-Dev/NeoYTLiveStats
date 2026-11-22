@@ -1,0 +1,49 @@
+name: build
+
+# build-wine.sh needs Wine plus a Windows .NET SDK inside the prefix, which a Linux
+# runner does not have. The publish it produces (Release / win-x64 / self-contained /
+# single file) is reproducible on Linux with EnableWindowsTargeting, so CI builds
+# that and checks the result really is a Windows PE - a compile, not an assumption.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    name: Publish win-x64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: dotnet publish (Release, win-x64, self-contained, single file)
+        run: |
+          set -euo pipefail
+          dotnet publish NeoYTLiveStats.csproj \
+            -c Release -r win-x64 --self-contained true \
+            -p:PublishSingleFile=true -p:EnableWindowsTargeting=true \
+            -o out
+
+      - name: Check the published exe
+        run: |
+          set -euo pipefail
+          exe=out/NeoYTLiveStats.exe
+          test -f "$exe" || { echo "NeoYTLiveStats.exe was not produced"; exit 1; }
+          ls -lh "$exe"
+          ftype=$(file -b "$exe")
+          echo "file type: $ftype"
+          case "$ftype" in
+            *PE32+*) ;;
+            *) echo "$exe is not a PE32+ Windows binary"; exit 1 ;;
+          esac
+          size=$(stat -c %s "$exe")
+          test "$size" -gt 1000000 \
+            || { echo "$exe is only $size bytes - the self-contained runtime is missing"; exit 1; }
