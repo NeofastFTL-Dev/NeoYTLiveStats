@@ -262,5 +262,4 @@ added afterwards, `AppSettings.cs` + `SettingsForm.cs` for the settings screen.
 
 ## License
 
-No license file exists yet — the choice is left to the repository owner. Until a `LICENSE` file is
-added, the code is “all rights reserved” by default.
+MIT - see [LICENSE](LICENSE).
