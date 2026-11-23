@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build NeoYTLiveStats as a self-contained single-file Windows exe that runs under Wine.
+# Build YTLiveStats as a self-contained single-file Windows exe that runs under Wine.
 #
 # Usage:
 #   ./build-wine.sh              build into dist/wine-x64 next to the project
@@ -23,8 +23,8 @@
 # live somewhere else.
 set -euo pipefail
 
-APP='NeoYTLiveStats'
-PROJECT_REL='NeoYTLiveStats.csproj'   # relative to this script
+APP='YTLiveStats'
+PROJECT_REL='YTLiveStats.csproj'   # relative to this script
 OUTPUT_REL='dist/wine-x64'     # relative to the project directory
 
 DRY_RUN=0

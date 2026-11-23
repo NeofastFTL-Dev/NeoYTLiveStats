@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace NeoYTLiveStats
+namespace YTLiveStats
 {
     public class Form1 : Form
     {
@@ -159,7 +159,7 @@ namespace NeoYTLiveStats
 
         private void BuildUi()
         {
-            Text = "NeoYT Live Stats";
+            Text = "YTLiveStats";
             BackColor = _bg;
             ForeColor = Color.White;
             MinimumSize = new Size(900, 500);
@@ -671,12 +671,12 @@ namespace NeoYTLiveStats
             _lblVidViews.Text = "\u2014";
         }
 
-        /// <summary>Dumps the current numbers to %TEMP%\neoyt_last.json for inspection.</summary>
+        /// <summary>Dumps the current numbers to %TEMP%\ytl_last.json for inspection.</summary>
         private void WriteProof()
         {
             try
             {
-                File.WriteAllText(Path.Combine(Path.GetTempPath(), "neoyt_last.json"), JsonSerializer.Serialize(new
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "ytl_last.json"), JsonSerializer.Serialize(new
                 {
                     pollTick = _pollTick,
                     vidOk = _vidOk,

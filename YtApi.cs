@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NeoYTLiveStats
+namespace YTLiveStats
 {
     /// <summary>
     /// Reads live numbers off YouTube.

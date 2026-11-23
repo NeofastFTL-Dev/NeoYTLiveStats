@@ -4,11 +4,11 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace NeoYTLiveStats
+namespace YTLiveStats
 {
     /// <summary>
     /// Append-only log of what every data source did, written to
-    /// <c>%APPDATA%\NeoYTLiveStats\sources.log</c>.
+    /// <c>%APPDATA%\YTLiveStats\sources.log</c>.
     ///
     /// A line is only written when the outcome for one source changes, so the file reads as
     /// "html stopped parsing at 13:42, innertube-about took over" instead of one line per poll.

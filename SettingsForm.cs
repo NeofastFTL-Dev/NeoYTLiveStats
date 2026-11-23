@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
 
-namespace NeoYTLiveStats
+namespace YTLiveStats
 {
     /// <summary>Small modal dialog for the channel, the video and the flash thresholds.</summary>
     internal sealed class SettingsForm : Form

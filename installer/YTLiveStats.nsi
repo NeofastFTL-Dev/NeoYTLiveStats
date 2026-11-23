@@ -1,18 +1,18 @@
-; NeoYTLiveStats installer.
+; YTLiveStats installer.
 ; Per-user install: no administrator rights, everything lands in the user's own profile and the
 ; entry appears under the current user's "Apps & features" with a working uninstaller.
 
 Unicode true
 SetCompressor /SOLID lzma
 
-!define APPNAME "NeoYTLiveStats"
-!define APPEXE "NeoYTLiveStats.exe"
+!define APPNAME "YTLiveStats"
+!define APPEXE "YTLiveStats.exe"
 !define APPVERSION "1.0.0"
-!define PUBLISHER "NeoYTLiveStats"
+!define PUBLISHER "YTLiveStats"
 !define REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 
 Name "${APPNAME} ${APPVERSION}"
-OutFile "..\dist\NeoYTLiveStats-${APPVERSION}-setup.exe"
+OutFile "..\dist\YTLiveStats-${APPVERSION}-setup.exe"
 Icon "..\app.ico"
 UninstallIcon "..\app.ico"
 InstallDir "$LOCALAPPDATA\Programs\${APPNAME}"

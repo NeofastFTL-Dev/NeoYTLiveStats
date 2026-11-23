@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace NeoYTLiveStats
+namespace YTLiveStats
 {
     /// <summary>
-    /// User-editable configuration, stored in %APPDATA%\NeoYTLiveStats\settings.json.
+    /// User-editable configuration, stored in %APPDATA%\YTLiveStats\settings.json.
     /// Command-line arguments override these values for the current session only.
     /// </summary>
     public sealed class AppSettings
@@ -22,9 +22,32 @@ namespace NeoYTLiveStats
         /// <summary>Rainbow flash every N new channel views.</summary>
         public long ChannelViewsFlashStep { get; set; } = 100;
 
+        /// <summary>
+        /// The app kept its files in %APPDATA%\NeoYTLiveStats before it was renamed. Move that folder
+        /// across on the first start afterwards, so the settings, the source health log and the saved
+        /// counters are still there.
+        /// </summary>
+        public static void MigrateLegacyFolder()
+        {
+            try
+            {
+                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string legacy = Path.Combine(appData, "NeoYTLiveStats");
+                string current = Path.Combine(appData, "YTLiveStats");
+                if (Directory.Exists(legacy) && !Directory.Exists(current))
+                {
+                    Directory.Move(legacy, current);
+                }
+            }
+            catch
+            {
+                // Best effort: if the folder cannot be moved the app simply starts with defaults.
+            }
+        }
+
         public static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "NeoYTLiveStats", "settings.json");
+            "YTLiveStats", "settings.json");
 
         public static AppSettings Load()
         {

@@ -3,7 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
-namespace NeoYTLiveStats
+namespace YTLiveStats
 {
     /// <summary>
     /// The application icon, embedded in the exe as <c>app.ico</c> so the window, the taskbar, the
@@ -12,7 +12,7 @@ namespace NeoYTLiveStats
     /// </summary>
     internal static class AppIcon
     {
-        private const string ResourceName = "NeoYTLiveStats.app.ico";
+        private const string ResourceName = "YTLiveStats.app.ico";
 
         private static Icon? _cached;
 

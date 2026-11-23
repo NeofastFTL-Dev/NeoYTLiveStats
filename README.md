@@ -1,4 +1,4 @@
-# NeoYTLiveStats
+# YTLiveStats
 
 Fullscreen WinForms overlay that shows live YouTube numbers for a channel and a video:
 subscribers, channel views and video views, refreshed every second.
@@ -17,7 +17,7 @@ SUBS            KANAAL VIEWS        VIDEO VIEWS
 - Dutch number formatting (`1.234.567`) everywhere, with parsing that accepts both `1.234.567` and `1,234,567`.
 - **White flash** every N new subscribers, **rainbow flash** every N new video views and channel views
   (defaults: 10 / 100 / 100).
-- Writes the current numbers to `%TEMP%\neoyt_last.json` on every successful poll (handy for debugging).
+- Writes the current numbers to `%TEMP%\ytl_last.json` on every successful poll (handy for debugging).
 
 ## Repository layout
 
@@ -65,7 +65,7 @@ client key, the same one the web player ships with. It is not a secret and not t
 
 ## Source health log
 
-Every source outcome is appended to `%APPDATA%\NeoYTLiveStats\sources.log`, but only when the outcome
+Every source outcome is appended to `%APPDATA%\YTLiveStats\sources.log`, but only when the outcome
 for that source *changes* within a run. The file therefore reads as a history of breakage rather than
 one line per poll; each start of the app writes one baseline line per source it uses, so restarting is
 visible in the log too.
@@ -97,7 +97,9 @@ reports which source answered — for example `Kanaal via html: 1.160 subs · 41
 `Video via player: 420 views`. A source that answers without recognisable numbers is shown with its
 reason (`— Geen subscribers in deze bron (html)`), so a dead fallback is visible before it is saved.
 
-Saving writes `%APPDATA%\NeoYTLiveStats\settings.json` and applies immediately. If the handle or the
+Saving writes `%APPDATA%\YTLiveStats\settings.json` and applies immediately. That folder used to be
+called `%APPDATA%\NeoYTLiveStats`; it is moved over on the first start after the rename, settings and
+health log included. If the handle or the
 video changed, the counters are re-baselined and a fresh poll runs right away, so a different channel
 does not fire a flash on its existing numbers.
 
@@ -131,21 +133,21 @@ The project is `net8.0-windows` WinForms, so it only targets Windows.
 a script:
 
 ```bash
-./build-wine.sh              # -> dist/wine-x64/NeoYTLiveStats.exe
+./build-wine.sh              # -> dist/wine-x64/YTLiveStats.exe
 ./build-wine.sh --dry-run    # print the three commands instead
 ```
 
 By hand:
 
 ```bash
-~/.dotnet/dotnet restore NeoYTLiveStats.csproj -r win-x64 -p:EnableWindowsTargeting=true
-WINEPREFIX=~/.wine-dotnet wine 'C:\dotnet\dotnet.exe' publish NeoYTLiveStats.csproj \
+~/.dotnet/dotnet restore YTLiveStats.csproj -r win-x64 -p:EnableWindowsTargeting=true
+WINEPREFIX=~/.wine-dotnet wine 'C:\dotnet\dotnet.exe' publish YTLiveStats.csproj \
   -c Release -r win-x64 --self-contained true --no-restore \
   -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true \
   -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o dist/wine-x64
 ```
 
-That yields `dist/wine-x64/NeoYTLiveStats.exe` (about 145 MB uncompressed; the NSIS setup exe
+That yields `dist/wine-x64/YTLiveStats.exe` (about 145 MB uncompressed; the NSIS setup exe
 compresses it to about 60 MB). On Windows the same command works with
 a normal `dotnet publish`; on this machine the Wine step is needed because the Windows targeting
 packs and the WinForms runtime pack are resolved by the Windows SDK.
@@ -157,7 +159,7 @@ packs and the WinForms runtime pack are resolved by the Windows SDK.
 ```
 
 `./run-wine.sh` is a one-line wrapper around
-`WINEPREFIX=~/.wine-apps wine dist/wine-x64/NeoYTLiveStats.exe "$@"`.
+`WINEPREFIX=~/.wine-apps wine dist/wine-x64/YTLiveStats.exe "$@"`.
 
 Wine has no `WSALookupServiceBegin` implementation, so Chromium-style network-change warnings can
 appear on stderr; they are harmless, and the overlay itself runs normally (verified with live
@@ -174,17 +176,17 @@ Requires the .NET 8 SDK (`net8.0-windows`, Windows only because of WinForms).
 
 ## Installer
 
-A per-user installer is built with NSIS from `installer\NeoYTLiveStats.nsi`:
+A per-user installer is built with NSIS from `installer\YTLiveStats.nsi`:
 
 ```bash
 dotnet publish -c Release -r win-x64 --self-contained true \
   -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true \
   -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o dist\publish
-makensis installer\NeoYTLiveStats.nsi
+makensis installer\YTLiveStats.nsi
 ```
 
 > **On this machine:** `makensis` is not installed, so the setup exe cannot be rebuilt here. The
-> copies already in `dist/` (`NeoYTLiveStats-1.0.0-setup.exe`, `NeoYTLiveStats-1.0.0-portable.zip`)
+> copies already in `dist/` (`YTLiveStats-1.0.0-setup.exe`, `YTLiveStats-1.0.0-portable.zip`)
 > were built earlier on a Windows machine and are still the ones to ship. Install NSIS 3
 > (`apt install nsis` on Debian/Ubuntu) to rebuild locally.
 
@@ -196,16 +198,16 @@ generated (16–256 px, one drawing per size) by `installer\make-icon.ps1`:
 powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-icon.ps1
 ```
 
-That writes `dist\NeoYTLiveStats-1.0.0-setup.exe`, which installs into
-`%LOCALAPPDATA%\Programs\NeoYTLiveStats` without asking for administrator rights, adds a Start Menu
+That writes `dist\YTLiveStats-1.0.0-setup.exe`, which installs into
+`%LOCALAPPDATA%\Programs\YTLiveStats` without asking for administrator rights, adds a Start Menu
 shortcut and registers an entry under *Apps & features* pointing at the bundled `Uninstall.exe`
 (`Uninstall.exe /S` uninstalls silently, `setup.exe /S` installs silently). Settings and the source
-health log stay in `%APPDATA%\NeoYTLiveStats` and are not removed by uninstalling.
+health log stay in `%APPDATA%\YTLiveStats` and are not removed by uninstalling.
 
 The same publish output is also packed into a portable ZIP next to the setup exe
-(`dist\NeoYTLiveStats-1.0.0-portable.zip`: the exe plus this README, no shortcuts and no entry under
-*Apps & features*). Unpack it anywhere and run `NeoYTLiveStats.exe`; it still uses
-`%APPDATA%\NeoYTLiveStats` for settings and the source health log, so the portable and installed builds
+(`dist\YTLiveStats-1.0.0-portable.zip`: the exe plus this README, no shortcuts and no entry under
+*Apps & features*). Unpack it anywhere and run `YTLiveStats.exe`; it still uses
+`%APPDATA%\YTLiveStats` for settings and the source health log, so the portable and installed builds
 share them. Rebuild it after publishing with:
 
 ```bash
@@ -236,7 +238,7 @@ looks like in use:
 * **All counters show `—`** — the first poll has not finished, or no source answered. Open the
   settings dialog and press *Test*: it names the failing source.
 * **A counter never changes** — channel views are baseline-plus-delta; a quiet channel legitimately
-  moves slowly. Check `%TEMP%\neoyt_last.json` and `sources.log` for what the last poll returned.
+  moves slowly. Check `%TEMP%\ytl_last.json` and `sources.log` for what the last poll returned.
 * **`FOUT HTTP 429`** — YouTube is rate-limiting; the overlay backs off and keeps showing the last
   known numbers, marked stale.
 * **Nothing appears** — the exe is a fullscreen/borderless overlay; press **Esc** to leave fullscreen
@@ -245,8 +247,8 @@ looks like in use:
 ## Note on how this source was recovered
 
 The original sources were lost; only the published build survived (`bin/Release/net7.0-windows/win-x64`,
-a truncated `obj` folder and the single-file `NeoYTLiveStats.exe` on the Desktop). The project was
-restored by extracting the deflated `NeoYTLiveStats.dll` out of the single-file bundle and decompiling it,
+a truncated `obj` folder and the single-file `YTLiveStats.exe` on the Desktop). The project was
+restored by extracting the deflated `YTLiveStats.dll` out of the single-file bundle and decompiling it,
 then rebuilding the sources around it: `Program.cs` (entry point and argument parsing), `YtApi.cs`
 (YouTube/InnerTube scraping and number parsing), `Form1.cs` (layout, polling and flash effects) and,
 added afterwards, `AppSettings.cs` + `SettingsForm.cs` for the settings screen.

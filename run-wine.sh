@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launch NeoYTLiveStats from its published build.
+# Launch YTLiveStats from its published build.
 #
 # Usage:
 #   ./run-wine.sh [args...]
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EXE="${EXE:-dist/wine-x64/NeoYTLiveStats.exe}"
+EXE="${EXE:-dist/wine-x64/YTLiveStats.exe}"
 export WINEPREFIX="${WINEPREFIX:-$HOME/.wine-apps}"
 
 command -v wine >/dev/null || { echo "error: wine is not on PATH" >&2; exit 1; }
