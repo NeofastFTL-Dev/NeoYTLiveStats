@@ -6,6 +6,7 @@ name: build
 on:
   push:
     branches: [main, linux, macos]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -80,6 +81,12 @@ jobs:
           Write-Host "size: $size bytes"
           if ($size -lt 1000000) { throw "the exe is only $size bytes" }
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ytlivestats-windows
+          path: target/release/ytlivestats.exe
+          if-no-files-found: error
+
   macos:
     name: macOS build
     runs-on: macos-latest
@@ -107,3 +114,49 @@ jobs:
           name: ytlivestats-macos
           path: target/release/ytlivestats
           if-no-files-found: error
+
+  release:
+    name: Release
+    needs: [linux, windows, macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ytlivestats-linux-x86_64
+          path: dist/linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: ytlivestats-windows
+          path: dist/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: ytlivestats-macos
+          path: dist/macos
+
+      - name: Name the binaries after the tag
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          test -s dist/linux/ytlivestats
+          test -s dist/windows/ytlivestats.exe
+          test -s dist/macos/ytlivestats
+          mkdir -p out
+          cp dist/linux/ytlivestats "out/YTLiveStats-${version}-linux-x86_64"
+          cp dist/windows/ytlivestats.exe "out/YTLiveStats-${version}-windows-x86_64.exe"
+          cp dist/macos/ytlivestats "out/YTLiveStats-${version}-macos"
+          chmod 755 out/YTLiveStats-*
+          ls -l out
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+          name: YTLiveStats ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            Fullscreen overlay with live YouTube subscriber, channel-view and video-view counters.
+
+            Linux x86_64, Windows x86_64 and macOS binaries for this tag, each built and
+            self-tested by CI on its own platform.
