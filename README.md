@@ -214,6 +214,13 @@ share them. Rebuild it after publishing with:
 powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-portable.ps1
 ```
 
+## Automatic builds (GitHub Actions)
+`.github/workflows/build.yml` builds on every push to `main`, every pull request and every `v*` tag,
+on a Windows runner: `dotnet publish` → `makensis installer\YTLiveStats.nsi` →
+`installer\make-portable.ps1`, then uploads the exe, the setup exe and the portable ZIP as the
+`YTLiveStats-win-x64` artifact. Pushing a tag such as `v1.0.1` also publishes a GitHub release with
+the setup exe and the portable ZIP attached, so a release never needs a local Windows machine.
+
 ## Screenshots
 
 Screenshots belong in `docs/screenshots/`; none are committed yet. Three captures show what the app
