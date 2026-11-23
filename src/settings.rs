@@ -1,5 +1,6 @@
 //! User-editable configuration, stored in the per-user config folder:
 //! - Windows: `%APPDATA%\YTLiveStats\settings.json`
+//! - macOS: `~/Library/Application Support/YTLiveStats/settings.json`
 //! - elsewhere: `$XDG_CONFIG_HOME/ytlivestats/settings.json` (or `~/.config/...`)
 //!
 //! Command-line arguments override these values for the current session only.
@@ -69,6 +70,15 @@ pub fn data_dir() -> PathBuf {
         if let Ok(appdata) = std::env::var("APPDATA") {
             if !appdata.trim().is_empty() {
                 return PathBuf::from(appdata).join("YTLiveStats");
+            }
+        }
+    } else if cfg!(target_os = "macos") {
+        if let Ok(home) = std::env::var("HOME") {
+            if !home.trim().is_empty() {
+                return PathBuf::from(home)
+                    .join("Library")
+                    .join("Application Support")
+                    .join("YTLiveStats");
             }
         }
     } else if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {

@@ -5,7 +5,7 @@ name: build
 # instead of assuming they still behave the same way.
 on:
   push:
-    branches: [main, linux]
+    branches: [main, linux, macos]
   pull_request:
   workflow_dispatch:
 
@@ -79,3 +79,31 @@ jobs:
           $size = (Get-Item $exe).Length
           Write-Host "size: $size bytes"
           if ($size -lt 1000000) { throw "the exe is only $size bytes" }
+
+  macos:
+    name: macOS build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo build --release --locked
+      - run: cargo test --release --locked
+      - run: ./target/release/ytlivestats --selftest
+
+      - name: Check the binary
+        run: |
+          set -euo pipefail
+          ftype=$(file -b target/release/ytlivestats)
+          echo "$ftype"
+          case "$ftype" in
+            *Mach-O*) ;;
+            *) echo "not a Mach-O binary"; exit 1 ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ytlivestats-macos
+          path: target/release/ytlivestats
+          if-no-files-found: error
