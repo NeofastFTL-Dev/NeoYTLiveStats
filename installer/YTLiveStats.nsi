@@ -5,9 +5,18 @@
 Unicode true
 SetCompressor /SOLID lzma
 
+; The version is supplied by the build, not stored here:
+;   makensis /DAPPVERSION=1.2.3 /DAPPVERSION4=1.2.3.0 installer\YTLiveStats.nsi
+; APPVERSION4 must be the four numeric parts NSIS wants for VIProductVersion.
+!ifndef APPVERSION
+  !define APPVERSION "0.0.0"
+!endif
+!ifndef APPVERSION4
+  !define APPVERSION4 "${APPVERSION}.0"
+!endif
+
 !define APPNAME "YTLiveStats"
 !define APPEXE "YTLiveStats.exe"
-!define APPVERSION "1.0.1"
 !define PUBLISHER "YTLiveStats"
 !define REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 
@@ -21,7 +30,7 @@ RequestExecutionLevel user
 ShowInstDetails show
 ShowUninstDetails show
 
-VIProductVersion "1.0.1.0"
+VIProductVersion "${APPVERSION4}"
 VIAddVersionKey "ProductName" "${APPNAME}"
 VIAddVersionKey "FileDescription" "${APPNAME} installatieprogramma"
 VIAddVersionKey "FileVersion" "${APPVERSION}"

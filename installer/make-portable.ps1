@@ -3,16 +3,25 @@
 # installation: unpack anywhere and run YTLiveStats.exe. Settings and the source health log still
 # live in %APPDATA%\YTLiveStats, so the portable build and the installed build share them.
 #
-#   powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-portable.ps1
+#   powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-portable.ps1 -Version 1.2.3
 #
-# Writes dist\YTLiveStats-<version>-portable.zip next to the setup exe.
+# Writes dist\YTLiveStats-<version>-portable.zip next to the setup exe. The version comes from the
+# build (the v* tag in CI), so nothing here is versioned by hand; -OutFile overrides the name.
 
 param(
+  [string]$Version,
   [string]$Payload = (Join-Path $PSScriptRoot '..\dist\publish'),
-  [string]$OutFile = (Join-Path $PSScriptRoot '..\dist\YTLiveStats-1.0.1-portable.zip')
+  [string]$OutFile
 )
 
 $ErrorActionPreference = 'Stop'
+
+if (-not $OutFile) {
+  if (-not $Version) {
+    throw 'specify -Version <x.y.z> (or -OutFile): the ZIP is named after the version'
+  }
+  $OutFile = Join-Path $PSScriptRoot "..\dist\YTLiveStats-$Version-portable.zip"
+}
 
 $payloadExe = Join-Path $Payload 'YTLiveStats.exe'
 if (-not (Test-Path -LiteralPath $payloadExe)) {

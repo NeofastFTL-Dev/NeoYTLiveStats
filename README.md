@@ -182,8 +182,12 @@ A per-user installer is built with NSIS from `installer\YTLiveStats.nsi`:
 dotnet publish -c Release -r win-x64 --self-contained true \
   -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true \
   -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o dist\publish
-makensis installer\YTLiveStats.nsi
+makensis /DAPPVERSION=1.2.3 /DAPPVERSION4=1.2.3.0 installer\YTLiveStats.nsi
 ```
+
+The version is not stored in the script: `APPVERSION` names the setup exe and shows in
+_Apps & features_, `APPVERSION4` is the four numeric parts NSIS wants for `VIProductVersion`.
+CI passes both from the tag.
 
 > **On this machine:** `makensis` is not installed, so the setup exe cannot be rebuilt here. CI
 > builds it instead; the published setup exe and portable ZIP come from the `v*` tag builds.
@@ -197,28 +201,36 @@ generated (16–256 px, one drawing per size) by `installer\make-icon.ps1`:
 powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-icon.ps1
 ```
 
-That writes `dist\YTLiveStats-1.0.1-setup.exe`, which installs into
+That writes `dist\YTLiveStats-<version>-setup.exe`, which installs into
 `%LOCALAPPDATA%\Programs\YTLiveStats` without asking for administrator rights, adds a Start Menu
 shortcut and registers an entry under *Apps & features* pointing at the bundled `Uninstall.exe`
 (`Uninstall.exe /S` uninstalls silently, `setup.exe /S` installs silently). Settings and the source
 health log stay in `%APPDATA%\YTLiveStats` and are not removed by uninstalling.
 
 The same publish output is also packed into a portable ZIP next to the setup exe
-(`dist\YTLiveStats-1.0.1-portable.zip`: the exe plus this README, no shortcuts and no entry under
+(`dist\YTLiveStats-<version>-portable.zip`: the exe plus this README, no shortcuts and no entry under
 *Apps & features*). Unpack it anywhere and run `YTLiveStats.exe`; it still uses
 `%APPDATA%\YTLiveStats` for settings and the source health log, so the portable and installed builds
 share them. Rebuild it after publishing with:
 
 ```bash
-powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-portable.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-portable.ps1 -Version 1.2.3
 ```
 
 ## Automatic builds (GitHub Actions)
 `.github/workflows/build.yml` builds on every push to `main`, every pull request and every `v*` tag,
-on a Windows runner: `dotnet publish` → `makensis installer\YTLiveStats.nsi` →
-`installer\make-portable.ps1`, then uploads the exe, the setup exe and the portable ZIP as the
-`YTLiveStats-win-x64` artifact. Pushing a tag such as `v1.0.1` also publishes a GitHub release with
-the setup exe and the portable ZIP attached, so a release never needs a local Windows machine.
+on a Windows runner: `dotnet publish` → `makensis` → `installer/make-portable.ps1`, then uploads the
+exe, the setup exe and the portable ZIP as the `YTLiveStats-win-x64` artifact.
+
+The version comes from the build, never from a file: a `v1.2.3` tag builds version `1.2.3` — passed
+to `makensis` as `/DAPPVERSION=1.2.3 /DAPPVERSION4=1.2.3.0`, to `make-portable.ps1` as
+`-Version 1.2.3` and to `dotnet publish` as `-p:Version=1.2.3`, so the exe, the setup exe, the ZIP
+and the release all carry the tag's number. An untagged build (branch, PR) takes `<Version>` from
+`YTLiveStats.csproj` and appends `-dev.<run number>`, so it can never be mistaken for the release it
+is named after. `workflow_dispatch` accepts an explicit version instead.
+
+Pushing a tag also publishes a GitHub release with the setup exe and the portable ZIP attached, so a
+release never needs a local Windows machine.
 
 ## Screenshots
 
