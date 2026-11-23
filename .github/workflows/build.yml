@@ -5,7 +5,7 @@ name: build
 # instead of assuming they still behave the same way.
 on:
   push:
-    branches: [main]
+    branches: [main, linux]
   pull_request:
   workflow_dispatch:
 
@@ -50,6 +50,12 @@ jobs:
           esac
           size=$(stat -c %s target/release/ytlivestats)
           test "$size" -gt 1000000 || { echo "binary is only $size bytes"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ytlivestats-linux-x86_64
+          path: target/release/ytlivestats
+          if-no-files-found: error
 
   windows:
     name: Windows build
