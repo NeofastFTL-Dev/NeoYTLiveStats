@@ -1,22 +1,13 @@
-; YTLiveStats installer.
+; YTLiveStats installer (Rust/egui build).
 ; Per-user install: no administrator rights, everything lands in the user's own profile and the
 ; entry appears under the current user's "Apps & features" with a working uninstaller.
 
 Unicode true
 SetCompressor /SOLID lzma
 
-; The version is supplied by the build, not stored here:
-;   makensis /DAPPVERSION=1.2.3 /DAPPVERSION4=1.2.3.0 installer\YTLiveStats.nsi
-; APPVERSION4 must be the four numeric parts NSIS wants for VIProductVersion.
-!ifndef APPVERSION
-  !define APPVERSION "0.0.0"
-!endif
-!ifndef APPVERSION4
-  !define APPVERSION4 "${APPVERSION}.0"
-!endif
-
 !define APPNAME "YTLiveStats"
-!define APPEXE "YTLiveStats.exe"
+!define APPEXE "ytlivestats.exe"
+!define APPVERSION "1.1.0"
 !define PUBLISHER "YTLiveStats"
 !define REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 
@@ -30,7 +21,7 @@ RequestExecutionLevel user
 ShowInstDetails show
 ShowUninstDetails show
 
-VIProductVersion "${APPVERSION4}"
+VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName" "${APPNAME}"
 VIAddVersionKey "FileDescription" "${APPNAME} installatieprogramma"
 VIAddVersionKey "FileVersion" "${APPVERSION}"
@@ -45,7 +36,7 @@ UninstPage instfiles
 
 Section "Installatie" SecMain
   SetOutPath "$INSTDIR"
-  File "..\dist\publish\${APPEXE}"
+  File "..\target\release\ytlivestats.exe"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\${APPNAME}"

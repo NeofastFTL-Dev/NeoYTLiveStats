@@ -1,148 +1,75 @@
 name: build
 
-# Autobuild: the release artifacts (single-file exe -> NSIS setup exe -> portable ZIP) are built on
-# a Windows runner, so what is published here is what a Windows machine produces.
-#
-# The version is never hardcoded: a v* tag supplies it (v1.2.3 -> 1.2.3) and is passed to the NSIS
-# script and the portable-ZIP script; an untagged build falls back to <Version> in the csproj and
-# gets a -dev.<run> suffix so it can never be mistaken for the release it is named after. Tags also
-# publish a GitHub release with the setup exe and the portable ZIP attached.
-#
-# build-wine.sh is only for machines without a Windows SDK; CI uses plain dotnet publish.
-
+# The app is Rust + egui/eframe now, so CI compiles it on both targets the port has to run on
+# and runs the headless self-test that covers the parsers, the formatter and the settings,
+# instead of assuming they still behave the same way.
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to build (default: the v* tag, else <Version> from YTLiveStats.csproj)'
-        type: string
-        required: false
 
 permissions:
-  contents: write # only used by the release step on a tag push
+  contents: read
 
 jobs:
-  windows-x64:
-    name: Build win-x64
+  linux:
+    name: Linux build + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install egui/winit system libraries
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev libwayland-dev libx11-xcb-dev libxcb-render0-dev \
+            libxcb-shape0-dev libxcb-xfixes0-dev libxi-dev libxcursor-dev \
+            libxrandr-dev libgl1-mesa-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo build --release
+        run: cargo build --release --locked
+
+      - name: cargo test
+        run: cargo test --release --locked
+
+      - name: Headless self-test
+        run: ./target/release/ytlivestats --selftest
+
+      - name: Check the binary
+        run: |
+          set -euo pipefail
+          ftype=$(file -b target/release/ytlivestats)
+          echo "$ftype"
+          case "$ftype" in
+            *ELF*) ;;
+            *) echo "not a Linux ELF binary"; exit 1 ;;
+          esac
+          size=$(stat -c %s target/release/ytlivestats)
+          test "$size" -gt 1000000 || { echo "binary is only $size bytes"; exit 1; }
+
+  windows:
+    name: Windows build
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Determine version
-        id: version
+      - name: cargo build --release
+        run: cargo build --release --locked
+
+      - name: Self-test
+        run: target/release/ytlivestats.exe --selftest
+
+      - name: Check the exe
         shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          $ref = '${{ github.ref }}'
-          if ($env:INPUT_VERSION) {
-            $version = $env:INPUT_VERSION
-            $source  = 'workflow_dispatch input'
-          } elseif ($ref -like 'refs/tags/v*') {
-            $version = $ref.Substring('refs/tags/v'.Length)
-            $source  = 'tag'
-          } else {
-            [xml]$csproj = Get-Content YTLiveStats.csproj
-            $version = @($csproj.Project.PropertyGroup.Version) | Where-Object { $_ } | Select-Object -First 1
-            $source  = 'YTLiveStats.csproj'
-          }
-          if (-not $version) { throw 'no version: no tag, no input, no <Version> in the csproj' }
-
-          # VIProductVersion needs four numeric parts; the name keeps whatever the tag said.
-          $numeric = ($version -split '[-+]')[0]
-          if ($numeric -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') {
-            throw "unsupported version '$version' (from $source): expected x.y.z or x.y.z.w"
-          }
-          $version4 = if (($numeric -split '\.').Count -eq 3) { "$numeric.0" } else { $numeric }
-
-          # A branch or PR build is not the release whose number it carries.
-          if ($source -eq 'YTLiveStats.csproj') { $version = "$version-dev.${{ github.run_number }}" }
-
-          "version=$version" >> $env:GITHUB_OUTPUT
-          "version4=$version4" >> $env:GITHUB_OUTPUT
-          Write-Host "version: $version   file version: $version4   (from $source)"
-
-      - name: dotnet publish (Release, win-x64, self-contained, single file)
-        shell: pwsh
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          dotnet publish YTLiveStats.csproj `
-            -c Release -r win-x64 --self-contained true -p:Version=$env:VERSION `
-            -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none `
-            -o dist/publish
-          if (-not (Test-Path dist/publish/YTLiveStats.exe)) { throw 'YTLiveStats.exe was not produced' }
-          "{0:N1} MB" -f ((Get-Item dist/publish/YTLiveStats.exe).Length / 1MB)
-
-      - name: Install NSIS
-        shell: pwsh
-        run: choco install nsis --yes --no-progress
-
-      - name: Build installer (makensis)
-        shell: pwsh
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          VERSION4: ${{ steps.version.outputs.version4 }}
-        run: |
-          $makensis = @(
-            'C:\Program Files (x86)\NSIS\makensis.exe',
-            'C:\Program Files\NSIS\makensis.exe'
-          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $makensis) { throw 'makensis.exe not found after installing NSIS' }
-          & $makensis "/DAPPVERSION=$env:VERSION" "/DAPPVERSION4=$env:VERSION4" installer/YTLiveStats.nsi
-          if ($LASTEXITCODE -ne 0) { throw "makensis failed with exit code $LASTEXITCODE" }
-          if (-not (Test-Path "dist/YTLiveStats-$env:VERSION-setup.exe")) {
-            throw "dist/YTLiveStats-$env:VERSION-setup.exe was not produced"
-          }
-
-      - name: Build portable ZIP
-        shell: pwsh
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File installer/make-portable.ps1 -Version $env:VERSION
-          if (-not (Test-Path "dist/YTLiveStats-$env:VERSION-portable.zip")) {
-            throw "dist/YTLiveStats-$env:VERSION-portable.zip was not produced"
-          }
-
-      - name: Verify artifacts
-        shell: pwsh
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          $files = @(
-            'dist/publish/YTLiveStats.exe',
-            "dist/YTLiveStats-$env:VERSION-setup.exe",
-            "dist/YTLiveStats-$env:VERSION-portable.zip"
-          )
-          Get-Item $files | Select-Object Name, Length | Format-Table -AutoSize
-          foreach ($f in $files[1..2]) {
-            if ((Get-Item $f).Length -lt 1000000) { throw "$f is suspiciously small" }
-          }
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: YTLiveStats-win-x64
-          path: |
-            dist/publish/YTLiveStats.exe
-            dist/YTLiveStats-${{ steps.version.outputs.version }}-setup.exe
-            dist/YTLiveStats-${{ steps.version.outputs.version }}-portable.zip
-          if-no-files-found: error
-
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/YTLiveStats-${{ steps.version.outputs.version }}-setup.exe
-            dist/YTLiveStats-${{ steps.version.outputs.version }}-portable.zip
-          fail_on_unmatched_files: true
+          $exe = "target/release/ytlivestats.exe"
+          if (-not (Test-Path $exe)) { throw "ytlivestats.exe was not produced" }
+          $size = (Get-Item $exe).Length
+          Write-Host "size: $size bytes"
+          if ($size -lt 1000000) { throw "the exe is only $size bytes" }

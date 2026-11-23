@@ -1,22 +1,10 @@
-# ---- .NET / Visual Studio ----
-bin/
-obj/
-publish/
-*.user
-*.suo
-*.userosscache
-.vs/
+# ---- Rust ----
+/target/
+**/*.rs.bk
 
 # ---- Build output ----
-dist/
-*.exe
-*.dll
+/dist/
 *.pdb
-*.zip
-*.msi
-
-# ---- Local logs and settings ----
-*.log
 
 # ---- Editor / OS junk ----
 .idea/
