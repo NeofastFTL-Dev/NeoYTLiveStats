@@ -7,7 +7,7 @@ SetCompressor /SOLID lzma
 
 !define APPNAME "YTLiveStats"
 !define APPEXE "YTLiveStats.exe"
-!define APPVERSION "1.0.0"
+!define APPVERSION "1.0.1"
 !define PUBLISHER "YTLiveStats"
 !define REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 
@@ -21,7 +21,7 @@ RequestExecutionLevel user
 ShowInstDetails show
 ShowUninstDetails show
 
-VIProductVersion "1.0.0.0"
+VIProductVersion "1.0.1.0"
 VIAddVersionKey "ProductName" "${APPNAME}"
 VIAddVersionKey "FileDescription" "${APPNAME} installatieprogramma"
 VIAddVersionKey "FileVersion" "${APPVERSION}"

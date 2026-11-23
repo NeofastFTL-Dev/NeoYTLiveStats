@@ -185,10 +185,9 @@ dotnet publish -c Release -r win-x64 --self-contained true \
 makensis installer\YTLiveStats.nsi
 ```
 
-> **On this machine:** `makensis` is not installed, so the setup exe cannot be rebuilt here. The
-> copies already in `dist/` (`YTLiveStats-1.0.0-setup.exe`, `YTLiveStats-1.0.0-portable.zip`)
-> were built earlier on a Windows machine and are still the ones to ship. Install NSIS 3
-> (`apt install nsis` on Debian/Ubuntu) to rebuild locally.
+> **On this machine:** `makensis` is not installed, so the setup exe cannot be rebuilt here. CI
+> builds it instead; the published setup exe and portable ZIP come from the `v*` tag builds.
+> Install NSIS 3 (`apt install nsis` on Debian/Ubuntu) to rebuild locally.
 
 The icon in `app.ico` is embedded in the exe and used for the window, the taskbar, the Start Menu
 shortcut and the Apps & features entry; the installer's own icon comes from the same file. It is
@@ -198,14 +197,14 @@ generated (16–256 px, one drawing per size) by `installer\make-icon.ps1`:
 powershell -NoProfile -ExecutionPolicy Bypass -File installer\make-icon.ps1
 ```
 
-That writes `dist\YTLiveStats-1.0.0-setup.exe`, which installs into
+That writes `dist\YTLiveStats-1.0.1-setup.exe`, which installs into
 `%LOCALAPPDATA%\Programs\YTLiveStats` without asking for administrator rights, adds a Start Menu
 shortcut and registers an entry under *Apps & features* pointing at the bundled `Uninstall.exe`
 (`Uninstall.exe /S` uninstalls silently, `setup.exe /S` installs silently). Settings and the source
 health log stay in `%APPDATA%\YTLiveStats` and are not removed by uninstalling.
 
 The same publish output is also packed into a portable ZIP next to the setup exe
-(`dist\YTLiveStats-1.0.0-portable.zip`: the exe plus this README, no shortcuts and no entry under
+(`dist\YTLiveStats-1.0.1-portable.zip`: the exe plus this README, no shortcuts and no entry under
 *Apps & features*). Unpack it anywhere and run `YTLiveStats.exe`; it still uses
 `%APPDATA%\YTLiveStats` for settings and the source health log, so the portable and installed builds
 share them. Rebuild it after publishing with:

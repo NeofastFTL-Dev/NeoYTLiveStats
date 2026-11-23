@@ -9,7 +9,7 @@
 
 param(
   [string]$Payload = (Join-Path $PSScriptRoot '..\dist\publish'),
-  [string]$OutFile = (Join-Path $PSScriptRoot '..\dist\YTLiveStats-1.0.0-portable.zip')
+  [string]$OutFile = (Join-Path $PSScriptRoot '..\dist\YTLiveStats-1.0.1-portable.zip')
 )
 
 $ErrorActionPreference = 'Stop'
